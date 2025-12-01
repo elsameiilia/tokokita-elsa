@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:tokokita/bloc/registrasi_bloc.dart';
+import 'package:tokokita/widget/success_dialog.dart';
+import 'package:tokokita/widget/warning_dialog.dart';
 
 class RegistrasiPage extends StatefulWidget {
   const RegistrasiPage({Key? key}) : super(key: key);
@@ -111,32 +114,48 @@ class _RegistrasiPageState extends State<RegistrasiPage> {
 
   Widget _buttonRegistrasi() {
     return ElevatedButton(
-      onPressed: _isLoading
-          ? null
-          : () {
-              var validate = _formKey.currentState!.validate();
-              if (validate) {
-                setState(() {
-                  _isLoading = true;
-                });
-
-                Future.delayed(const Duration(seconds: 2), () {
-                  setState(() {
-                    _isLoading = false; 
-                  });
-                });
-              }
-            },
-      child: _isLoading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          : const Text("Registrasi"),
+      child: const Text("Registrasi"),
+      onPressed: () {
+        var validate = _formKey.currentState!.validate();
+        if (validate) {
+          if (!_isLoading) _submit();
+        }
+      },
     );
+  }
+
+  void _submit(){
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+    RegistrasiBloc.registrasi(
+      nama: _namaTextboxController.text,
+      email: _emailTextboxController.text,
+      password: _passwordTextboxController.text,
+    ).then((value) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, builder: (BuildContext context) => SuccessDialog(
+          description: "Registrasi berhasil, silahkan login",
+          okClick: () {
+            Navigator.of(context).pop();
+          },
+        )
+      );
+    }, onError: (error) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, builder: (BuildContext context) => WarningDialog(
+          description: ("Registrasi gagal, silakan coba lagi"),
+          okClick: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      );
+    });
+    setState(() {
+      _isLoading = false;
+    });
   }
 }
