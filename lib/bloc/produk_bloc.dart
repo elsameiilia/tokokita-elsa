@@ -51,6 +51,6 @@ class ProdukBloc {
 
     var response = await Api().delete(apiUrl);
     var jsonObj = json.decode(response);
-    return (jsonObj as Map<String, dynamic>)['data'];
+    return jsonObj['status'];
   }
 }

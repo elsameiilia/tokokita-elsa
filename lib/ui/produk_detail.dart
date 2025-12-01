@@ -67,28 +67,27 @@ class _ProdukDetailState extends State<ProdukDetail> {
     );
   }
 
-  void confirmHapus() {
+void confirmHapus() {
     AlertDialog alertDialog = AlertDialog(
       content: const Text("Yakin ingin menghapus data ini?"),
       actions: [
         OutlinedButton(
           child: const Text("Ya"),
           onPressed: () {
-            ProdukBloc.deleteProduk(id: int.parse(widget.produk!.id!)).then(
-              (value) => {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const ProdukPage()))
-              },
-              onError: (error) {
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) => const WarningDialog(
-                    description: "Hapus gagal, silahkan coba lagi",
-                  ),
-                );
-              },
-            );
-            Navigator.pop(context);
+            ProdukBloc.deleteProduk(id: int.parse(widget.produk!.id!))
+                .then((value) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const ProdukPage()),
+                  );
+                })
+                .catchError((error) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => const WarningDialog(
+                      description: "Hapus gagal, silahkan coba lagi",
+                    ),
+                  );
+                });
           },
         ),
         OutlinedButton(
@@ -97,9 +96,6 @@ class _ProdukDetailState extends State<ProdukDetail> {
         ),
       ],
     );
-    showDialog(
-      builder: (context) => alertDialog,
-      context: context
-    );
+    showDialog(builder: (context) => alertDialog, context: context);
   }
 }

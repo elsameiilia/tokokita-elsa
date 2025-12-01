@@ -1,112 +1,384 @@
 # Tokokita - Tugas Praktikum Pemrograman Mobile 
-Aplikasi sederhana pengelolaan produk yang memiliki fitur login, register, dan CRUD produk.
+Aplikasi sederhana pengelolaan produk yang memiliki fitur login, register, dan CRUD produk. Aplikasi dibangun dengan menggunakan Flutter dan terintegrasi dengan API melalui CodeIgniter3.
 
+```
 Nama: Elsa Meilia Pusparani
 NIM: H1D023092  
 Shift Awal : C
 Shift Baru : D
+```
 
 ## Screenshot
 ### 1. Halaman Login
-![Login](docs/login-page.jpeg)
-Halaman pertama yang akan dihadapkan kepada user, sebagai portal masuk ke aplikasi.
+a. Form Login
+![Login](docs-api/login.jpeg)
+- Halaman pertama yang akan dihadapkan kepada user, sebagai portal masuk ke aplikasi. User mengisi kolom dengan email dan password yang telah didaftarkan. Jika user belum memiliki akun, silakan memilih menu registrasi.
 
-### 2. Halaman Register
-![Register](docs/register-page.jpeg)
-Halaman untuk melakukan pendaftaran akun jika user belum memiliki akun. Dapat diakses melalui link 'Registrasi' yang ada pada halaman login.
+b. Popup Gagal Login
+![Popup Login](docs-api/login-popup.jpeg)
+- Jika login berhasil, user akan diarahkan ke halaman produk. Jika gagal, akan muncul popup yang meminta user untuk mencoba lagi.
+
+Kode dari `lib/ui/login_page.dart`: 
+```dart
+ void _submit() {
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+    LoginBloc.login(
+      email: _emailTextboxController.text,
+      password: _passwordTextboxController.text,
+    ).then(
+      (value) async {
+        if (value.code == 200) {
+          await UserInfo().setToken(value.token.toString());
+          if (value.userID != null) {
+            await UserInfo().setUserID(int.parse(value.userID.toString()));
+          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ProdukPage()),
+          );
+        } else {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) => const WarningDialog(
+              description: "Login gagal, silahkan coba lagi",
+            ),
+          );
+        }
+      },
+      onError: (error) {
+        print(error);
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) => const WarningDialog(
+            description: "Login gagal, silahkan coba lagi",
+          ),
+        );
+      },
+    );
+    setState(() {
+      _isLoading = false;
+    });
+  }
+```
+
+Pada kode di atas, fungsi `_submit()` ini menangani proses login dengan mengambil data email dan password dari form, lalu mengirimnya ke `LoginBloc`. Jika login berhasil, token dan user ID disimpan menggunakan `UserInfo`, kemudian user diarahkan ke halaman `ProdukPage`. Jika gagal—baik karena respons API tidak sesuai atau terjadi error—maka aplikasi menampilkan `WarningDialog`. Setelah proses selesai, indikator loading dimatikan kembali.
+
+
+### 2. Halaman Registrasi
+a. Form Registrasi
+![Registrasi](docs-api/registrasi.jpeg)
+- Halaman untuk melakukan pendaftaran akun jika user belum memiliki akun. Dapat diakses melalui link 'Registrasi' yang ada pada halaman login.
+
+b. Popup Berhasil Registrasi
+![Popup Registrasi](docs-api/registrasi-popup.jpeg)
+- Jika berhasil, akan muncul popup yang menampilkan bahwa registrasi berhasil dan pengguna akan diarahkan untuk login.
+
+Kode dari `lib/ui/registrasi_page.dart`:
+```dart
+void _submit(){
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+    RegistrasiBloc.registrasi(
+      nama: _namaTextboxController.text,
+      email: _emailTextboxController.text,
+      password: _passwordTextboxController.text,
+    ).then((value) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, builder: (BuildContext context) => SuccessDialog(
+          description: "Registrasi berhasil, silahkan login",
+          okClick: () {
+            Navigator.of(context).pop();
+          },
+        )
+      );
+    }, onError: (error) {
+      showDialog(
+        context: context,
+        barrierDismissible: false, builder: (BuildContext context) => WarningDialog(
+          description: ("Registrasi gagal, silakan coba lagi"),
+          okClick: () {
+            Navigator.of(context).pop();
+          },
+        ),
+      );
+    });
+    setState(() {
+      _isLoading = false;
+    });
+  }
+```
+
+Pada kode di atas, fungsi `_submit()` digunakan untuk memproses form registrasi dengan cara menyimpan data input, menampilkan loading, lalu mengirim data ke API melalui `RegistrasiBloc`. Jika berhasil, aplikasi menampilkan `SuccessDialog`, dan jika gagal akan menampilkan `WarningDialog`. Setelah proses selesai, indikator loading dimatikan kembali.
+
 
 ### 3. Halaman Produk Page
-![Produk List](docs/daftar-produk.jpeg)
+![Produk List](docs-api/daftar-produk.jpeg)
 Halaman yang akan menampilkan daftar produk yang ada pada aplikasi, ditampilkan dalam bentuk list. User bisa menekan produk yang diinginkan untuk melihat detail produk. Untuk menambah produk, user bisa menekan tombol tambah di pojok kanan atas (+). Ada juga side drawer yang menampilkan menu.
 
+Kode dari `lib/ui/produk_page.dart`:
+```dart
+body: FutureBuilder<List>(
+        future: ProdukBloc.getProduk(),
+        builder: (context, snapshot){
+          if (snapshot.hasError) print(snapshot.error);
+          return snapshot.hasData
+              ? ListProduk(list: snapshot.data)
+              : const Center(child: CircularProgressIndicator());
+    })
+```
+
+Potongan kode di atas menggunakan `FutureBuilder` untuk memanggil data produk dari `ProdukBloc.getProduk()`. Jika data berhasil di-load, widget akan menampilkan daftar produk melalui `ListProduk`. Jika data masih diproses, akan muncul indikator loading (`CircularProgressIndicator`). Jika terjadi error, error akan dicetak ke console.
+
+
 ### 4. Halaman Produk Form
-![Produk Form](docs/tambah-produk.jpeg)
+![Produk Form](docs-api/tambah-produk.jpeg)
 Halaman yang digunakan untuk menambah produk baru ke dalam aplikasi. User dipersilakan untuk mengisi semua kolom yang tersedia, lalu menekan tombol 'Simpan' untuk menyimpan produk dalam aplikasi.
 
+Kode dari `lib/ui/produk_form.dart`:
+```dart
+simpan() {
+    setState(() {
+      _isLoading = true;
+    });
+    Produk createProduk = Produk(id: null);
+    createProduk.kodeProduk = _kodeProdukTextboxController.text;
+    createProduk.namaProduk = _namaProdukTextboxController.text;
+    createProduk.hargaProduk = int.parse(_hargaProdukTextboxController.text);
+    ProdukBloc.addProduk(produk: createProduk).then(
+      (value) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (BuildContext context) => const ProdukPage(),
+          ),
+        );
+      },
+      onError: (error) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => const WarningDialog(
+            description: "Simpan gagal, silahkan coba lagi",
+          ),
+        );
+      },
+    );
+    setState(() {
+      _isLoading = false;
+    });
+  }
+```
+
+Pada kode di atas, fungsi `simpan()` digunakan untuk menambah data produk baru. Saat dipanggil, fungsi ini mengaktifkan indikator loading dan membuat objek `Produk` dari input pengguna. Data tersebut kemudian dikirim ke server melalui `ProdukBloc.addProduk()`. Jika berhasil, pengguna diarahkan kembali ke halaman daftar produk (`ProdukPage`). Jika terjadi error, sistem menampilkan dialog peringatan. Setelah proses selesai, status loading dimatikan kembali.
+
+
 ### 5. Halaman Produk Detail
-![Produk Detail](docs/detail-produk.jpeg)
+a. Detail Produk
+![Produk Detail](docs-api/detail-produk.jpeg)
 Halaman yang menampilkan detail lebih lanjut tentang produk. User juga dapat melakukan berbagai aksi, seperti 'Edit' yang akan mengarahkan pengguna ke form ubah produk, dan 'Hapus' yang akan mengarahkan pengguna ke pop up untuk konfirmasi menghapus produk dalam aplikasi.
 
+Kode dari `lib/ui/produk_detail.dart`:
+```dart
+body: Center(
+        child: Column(
+            children: [
+              Text(
+              'Kode Produk : ${widget.produk!.kodeProduk }',
+              style: const TextStyle(fontSize: 20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Nama Produk : ${widget.produk!.namaProduk}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Harga : Rp ${widget.produk!.hargaProduk.toString()}',
+              style: const TextStyle(fontSize: 18),
+            ),
+            _tombolHapusEdit(),
+          ],
+        ),
+      ),
+```
+
+Pada kode di atas, setiap atribut produk (`kodeProduk`, `namaProduk`, `hargaProduk`) diambil dari `widget.produk` dan di bagian akhir `_tombolHapusEdit()` dipanggil untuk menampilkan tombol aksi (edit/hapus).
+
+b. Edit Produk
+![Edit Produk](docs-api/ubah-produk.jpeg)
+Halaman yang menampilkan form untuk mengedit/mengubah produk yang telah disimpan sebelumnya.
+
+Kode dari `lib/ui/produk_form.dart`:
+```dart
+ubah() {
+    setState(() {
+      _isLoading = true;
+    });
+    Produk updateProduk = Produk(id: widget.produk!.id!);
+    updateProduk.kodeProduk = _kodeProdukTextboxController.text;
+    updateProduk.namaProduk = _namaProdukTextboxController.text;
+    updateProduk.hargaProduk = int.parse(_hargaProdukTextboxController.text);
+    ProdukBloc.updateProduk(produk: updateProduk).then(
+      (value) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (BuildContext context) => const ProdukPage(),
+          ),
+        );
+      },
+      onError: (error) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) => const WarningDialog(
+            description: "Permintaan ubah data gagal, silahkan coba lagi",
+          ),
+        );
+      },
+    );
+    setState(() {
+      _isLoading = false;
+    });
+  }
+```
+
+Pada kode di atas, fungsi `ubah()` digunakan untuk mengirim permintaan update data produk. Fungsi ini pertama-tama mengaktifkan indikator loading dengan `setState`. Kemudian membuat objek `Produk` baru dengan `id` produk yang sedang diedit, lalu mengisi nilai terbaru dari controller input. Data tersebut dikirim ke server melalui `ProdukBloc.updateProduk()`. Jika permintaan berhasil, halaman dialihkan kembali ke `ProdukPage`; jika gagal, ditampilkan `WarningDialog`. Di akhir fungsi, loading dinonaktifkan kembali dengan `setState`.
+
+c. Hapus Produk
+![Hapus Produk](docs-api/hapus-produk.jpeg)
+Tombol ini akan mengarahkan user kepada dialog/popup untuk konfimasi apakah user yakin untuk menghapus produk. Jika user mengklik `Ya`, produk akan dihapus. Jika user mengklik `Batal`, user akan diarahkan kembali ke detail produk.
+
+Kode dari `lib/ui/produk_detail.dart`:
+```dart
+void confirmHapus() {
+    AlertDialog alertDialog = AlertDialog(
+      content: const Text("Yakin ingin menghapus data ini?"),
+      actions: [
+        OutlinedButton(
+          child: const Text("Ya"),
+          onPressed: () {
+            ProdukBloc.deleteProduk(id: int.parse(widget.produk!.id!))
+                .then((value) {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (context) => const ProdukPage()),
+                  );
+                })
+                .catchError((error) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) => const WarningDialog(
+                      description: "Hapus gagal, silahkan coba lagi",
+                    ),
+                  );
+                });
+          },
+        ),
+        OutlinedButton(
+          child: const Text("Batal"),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ],
+    );
+    showDialog(builder: (context) => alertDialog, context: context);
+  }
+
+```
+
+Berikut penjelasan teknis singkatnya:
+
+Pada kode di atas, fungsi `confirmHapus()` menampilkan dialog konfirmasi sebelum menghapus data produk. Ketika tombol **"Ya"** ditekan, fungsi memanggil `ProdukBloc.deleteProduk()` dengan ID produk yang dipilih. Jika penghapusan berhasil, halaman dialihkan kembali ke `ProdukPage`. Jika terjadi error, sistem menampilkan `WarningDialog`. Setelah memulai proses hapus, dialog ditutup dengan `Navigator.pop(context)`. Tombol **"Batal"** hanya menutup dialog tanpa melakukan apa pun.
+
+
 ## Penjelasan Kode
+### Arsitektur Singkat
+Aplikasi mengikuti pola sederhana: UI (Widget) memanggil layer Bloc statis → Bloc memanggil helper API (`Api`) → Helper melakukan HTTP request ke endpoint yang didefinisikan di `ApiUrl` → Response JSON diubah menjadi Model (Login, Registrasi, Produk) → Hasil dikembalikan ke UI untuk ditampilkan atau diproses lanjut. Informasi sesi (token & userID) disimpan lewat `UserInfo` (SharedPreferences).
+
+### Alur Autentikasi
+1. User mengisi form login → `LoginBloc.login()` mengirim `email` & `password` via POST.
+2. Response berstatus 200 akan membawa `token` dan data user; token disimpan oleh `UserInfo`.
+3. Token (Bearer) dipakai untuk request terproteksi (produk). Pastikan backend benar-benar menggunakan header Authorization.
+4. Logout cukup memanggil `LogoutBloc.logout()` yang melakukan `prefs.clear()`.
 
 ### Model
-Model adalah representasi data yang digunakan dalam aplikasi. Setiap model memiliki struktur dan method untuk mengkonversi data JSON dari API menjadi objek Dart.
+Representasi data dari server. Setiap model punya factory `fromJson()` untuk memetakan struktur response.
 
-#### 1. login.dart
-File model untuk menangani data hasil proses login. Model ini menerima response dari API login dan memprosesnya menjadi objek Login yang berisi:
-- `code`: Kode status HTTP dari response API
-- `status`: Status boolean keberhasilan login
-- `token`: Token autentikasi yang diberikan setelah login berhasil
-- `userID`: ID user yang berhasil login
-- `userEmail`: Email user yang berhasil login
+#### login.dart
+- Menyimpan hasil operasi login: `code`, `status`, `token`, `userID`, `userEmail`.
+- Jika `code == 200`, mengambil nested field `data.token` dan `data.user`.
+- Catatan: Pastikan tipe `id` dari server konsisten (string vs int). Jika API mengirim integer, aman menggunakan `int.parse(obj['data']['user']['id'].toString())`.
 
-Model ini menggunakan factory constructor `fromJson()` untuk mengkonversi data JSON dari API menjadi objek Login. Terdapat pengecekan kondisi jika `code` bernilai 200 (berhasil), maka akan mengambil data token dan informasi user. Jika tidak, hanya akan menyimpan code dan status saja.
+#### produk.dart
+- Properti: `id`, `kodeProduk`, `namaProduk`, `hargaProduk`.
+- Factory membaca field JSON: `id`, `kode_produk`, `nama_produk`, `harga`.
+- Tipe `hargaProduk` dibuat dinamis agar fleksibel (int/double/string). Disarankan seragamkan jadi `int` atau `double` di backend untuk konsistensi.
 
-#### 2. produk.dart
-File model untuk merepresentasikan data produk dalam aplikasi. Model Produk memiliki atribut:
-- `id`: ID unik produk
-- `kodeProduk`: Kode identifikasi produk
-- `namaProduk`: Nama produk
-- `hargaProduk`: Harga produk (menggunakan tipe dynamic untuk fleksibilitas)
+#### registrasi.dart
+- Properti sederhana: `code`, `status`, `data` (biasanya pesan sukses/gagal).
+- Tidak ada nested parsing kompleks; langsung mapping satu tingkat.
 
-Model ini juga dilengkapi dengan factory constructor `fromJson()` yang mengkonversi data JSON dari API menjadi objek Produk.
+### Helper & Infrastruktur
 
-#### 3. registrasi.dart
-File model untuk menangani data hasil proses registrasi user baru. Model Registrasi memiliki struktur sederhana dengan atribut:
-- `code`: Kode status HTTP dari response API
-- `status`: Status boolean keberhasilan registrasi
-- `data`: Data pesan atau informasi tambahan dari proses registrasi
+#### api_url.dart
+- Menyimpan base path dan endpoint: `login`, `registrasi`, serta kumpulan endpoint CRUD produk.
+- Jika pakai Android Emulator untuk mengakses server lokal, ganti `localhost` menjadi `10.0.2.2`.
 
-Model ini menggunakan factory constructor `fromJson()` untuk mengkonversi response JSON dari API registrasi menjadi objek Registrasi. 
+#### user_info.dart
+- Abstraksi SharedPreferences untuk menyimpan `token` dan `userID`.
+- Metode `logout()` melakukan `clear()` sehingga seluruh sesi terhapus.
+
+#### api.dart
+- Wrapper HTTP (`package:http`). Metode: `post`, `get`, `put`, `delete`.
+- Menambahkan header Authorization Bearer jika token ada.
+- Mengembalikan `response.body` hanya untuk status 200 (atau bisa diperluas untuk 201/204 sesuai kebutuhan backend).
+- Menangani error via exception khusus: `FetchDataException`, `BadRequestException`, `UnauthorisedException`, dll.
+
+### Bloc Layer
+Menyediakan fungsi statis agar UI tidak langsung bergantung pada detail request.
+
+#### LoginBloc
+- Menyiapkan body `{email, password}` dan memanggil `Api().post` ke endpoint login.
+- Mengubah JSON menjadi instance `Login`.
+
+#### RegistrasiBloc
+- Mengirim `{nama, email, password}` ke endpoint registrasi.
+- Mengubah JSON menjadi `Registrasi` untuk feedback ke UI.
+
+#### ProdukBloc
+- `getProduk()`: GET daftar produk, memetakan list `data` menjadi List<Produk>.
+- `addProduk()`: POST produk baru (pastikan key harga sinkron dengan backend: `harga` vs `harga_produk`).
+- `updateProduk()`: PUT produk berdasarkan ID.
+- `deleteProduk()`: DELETE produk berdasarkan ID dan mengembalikan status (boolean atau asumsi sukses jika body kosong).
+
+#### LogoutBloc
+- Memanggil `UserInfo().logout()` untuk hapus sesi.
 
 ### UI (User Interface)
-UI adalah tampilan antarmuka pengguna yang dibangun menggunakan widget Flutter. Setiap halaman UI mengimplementasikan interaksi pengguna dan logika tampilan.
+Widget layar memegang validasi form, state loading, navigasi, dan memanggil Bloc.
 
-#### 1. login_page.dart
-File halaman login yang menjadi gerbang masuk aplikasi. Halaman ini menggunakan `StatefulWidget` untuk mengelola state form login. Komponen utama:
-- **Form dengan GlobalKey**: Untuk validasi input form
-- **Email TextField**: Input untuk email user dengan validasi tidak boleh kosong
-- **Password TextField**: Input untuk password dengan `obscureText: true` untuk menyembunyikan teks
-- **Loading State**: Menampilkan `CircularProgressIndicator` saat proses login berlangsung
-- **Link Registrasi**: InkWell widget yang mengarahkan ke halaman registrasi menggunakan `Navigator.push`
+#### login_page.dart
+- Form dengan field email + password dan tombol Login.
+- Memanggil `_submit()` → menyalakan loading → memanggil `LoginBloc.login()` → simpan token → navigasi ke Produk.
+- Menampilkan dialog kesalahan jika login gagal.
 
-Halaman ini menggunakan `TextEditingController` untuk mengelola input dari user dan melakukan validasi sebelum proses login. Terdapat state `_isLoading` untuk mengontrol tampilan loading dan menonaktifkan tombol saat proses sedang berjalan.
+#### registrasi_page.dart
+- Form lengkap: nama, email (RegEx), password, konfirmasi password.
+- Memanggil `_submit()` → kirim ke `RegistrasiBloc.registrasi()` → dialog sukses atau gagal.
 
-#### 2. registrasi_page.dart
-File halaman registrasi untuk user mendaftarkan akun baru. Halaman ini memiliki form yang lebih lengkap dibanding login. Komponen utama:
-- **Nama TextField**: Input nama dengan validasi minimal 3 karakter
-- **Email TextField**: Input email dengan validasi format email menggunakan RegEx pattern
-- **Password TextField**: Input password dengan validasi minimal 6 karakter
-- **Konfirmasi Password**: Input konfirmasi password yang harus sama dengan password pertama
-- **Tombol Registrasi**: Button dengan loading indicator saat proses registrasi
+#### produk_page.dart
+- Menggunakan `FutureBuilder` untuk memuat produk sekali saat build.
+- Drawer menyediakan logout (clear sesi token) dan kembali ke login.
+- Tombol tambah (+) membuka `ProdukForm`.
 
-Form dilengkapi dengan validator yang ketat untuk memastikan data yang diinput sesuai dengan requirement. Terdapat pengecekan format email yang valid dan pencocokan password dengan konfirmasi password.
+#### produk_form.dart
+- Mode Tambah vs Ubah ditentukan oleh apakah ada `produk` yang dikirim lewat konstruktor.
+- Fungsi `simpan()` dan `ubah()` merekayasa objek `Produk` lalu kirim ke Bloc.
+- Navigasi kembali ke `ProdukPage` setelah operasi.
 
-#### 3. produk_page.dart
-File halaman utama yang menampilkan daftar produk dalam bentuk list. Halaman ini adalah landing page setelah user berhasil login. Komponen utama:
-- **AppBar dengan Action Button**: Tombol tambah (+) di pojok kanan atas untuk menambah produk baru
-- **Drawer**: Side menu yang berisi opsi logout
-- **ListView**: Menampilkan list produk menggunakan widget custom `ItemProduk`
-- **ItemProduk Widget**: Widget stateless yang menerima parameter produk dan menampilkannya dalam Card dengan ListTile
-- **GestureDetector**: Mendeteksi tap pada item produk untuk navigasi ke halaman detail
-
-Saat ini halaman menggunakan data dummy (Kamera, Kulkas, Mesin Cuci) untuk menampilkan contoh produk. Setiap item produk dapat diklik untuk melihat detail.
-
-#### 4. produk_form.dart
-File halaman form untuk menambah atau mengubah data produk. Halaman ini dapat berfungsi ganda tergantung parameter yang diterima. Komponen utama:
-- **Dynamic Title**: Judul berubah antara "Tambah Produk" atau "Ubah Produk" berdasarkan parameter
-- **Kode Produk TextField**: Input kode produk dengan validasi tidak boleh kosong
-- **Nama Produk TextField**: Input nama produk dengan validasi tidak boleh kosong
-- **Harga Produk TextField**: Input harga dengan keyboard numerik dan validasi tidak boleh kosong
-- **State Management**: Menggunakan `initState()` untuk menentukan mode (tambah/ubah)
-
-Method `isUpdate()` mengecek apakah widget menerima parameter produk. Jika ya, maka form akan diisi dengan data produk tersebut dan berfungsi sebagai form edit. Jika tidak, form berfungsi untuk menambah produk baru.
-
-#### 5. produk_detail.dart
-File halaman detail produk yang menampilkan informasi lengkap sebuah produk. Halaman ini menerima parameter produk dari halaman sebelumnya. Komponen utama:
-- **Display Information**: Menampilkan kode produk, nama produk, dan harga dalam format yang rapi
-- **Tombol Edit**: Mengarahkan ke `ProdukForm` dengan parameter produk untuk mode edit
-- **Tombol Hapus**: Menampilkan dialog konfirmasi sebelum menghapus produk
-- **AlertDialog**: Dialog konfirmasi hapus dengan dua opsi "Ya" dan "Batal"
-
-Halaman ini menggunakan widget Column untuk menampilkan informasi produk secara vertikal. Method `confirmHapus()` menampilkan dialog konfirmasi untuk memastikan user benar-benar ingin menghapus produk sebelum eksekusi.
+#### produk_detail.dart
+- Menampilkan detail produk dan menyediakan aksi Edit serta Hapus.
+- Hapus memunculkan dialog konfirmasi sebelum memanggil `ProdukBloc.deleteProduk()`.
