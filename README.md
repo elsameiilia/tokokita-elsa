@@ -10,11 +10,11 @@ Shift Baru : D
 
 ## Screenshot
 ### 1. Halaman Login
-a. Form Login
+a. Form Login<br>
 ![Login](docs-api/login.jpeg)
 - Halaman pertama yang akan dihadapkan kepada user, sebagai portal masuk ke aplikasi. User mengisi kolom dengan email dan password yang telah didaftarkan. Jika user belum memiliki akun, silakan memilih menu registrasi.
 
-b. Popup Gagal Login
+b. Popup Gagal Login<br>
 ![Popup Login](docs-api/login-popup.jpeg)
 - Jika login berhasil, user akan diarahkan ke halaman produk. Jika gagal, akan muncul popup yang meminta user untuk mencoba lagi.
 
@@ -70,13 +70,13 @@ Pada kode di atas, fungsi `_submit()` ini menangani proses login dengan mengambi
 
 
 ### 2. Halaman Registrasi
-a. Form Registrasi
-![Registrasi](docs-api/registrasi.jpeg)
-- Halaman untuk melakukan pendaftaran akun jika user belum memiliki akun. Dapat diakses melalui link 'Registrasi' yang ada pada halaman login.
+a. Form Registrasi<br>
+![Registrasi](docs-api/registrasi.jpeg)<br>
+Halaman untuk melakukan pendaftaran akun jika user belum memiliki akun. Dapat diakses melalui link 'Registrasi' yang ada pada halaman login.
 
-b. Popup Berhasil Registrasi
-![Popup Registrasi](docs-api/registrasi-popup.jpeg)
-- Jika berhasil, akan muncul popup yang menampilkan bahwa registrasi berhasil dan pengguna akan diarahkan untuk login.
+b. Popup Berhasil Registrasi<br>
+![Popup Registrasi](docs-api/registrasi-popup.jpeg)<br>
+Jika berhasil, akan muncul popup yang menampilkan bahwa registrasi berhasil dan pengguna akan diarahkan untuk login.
 
 Kode dari `lib/ui/registrasi_page.dart`:
 ```dart
@@ -120,7 +120,7 @@ Pada kode di atas, fungsi `_submit()` digunakan untuk memproses form registrasi 
 
 
 ### 3. Halaman Produk Page
-![Produk List](docs-api/daftar-produk.jpeg)
+![Produk List](docs-api/daftar-produk.jpeg)<br>
 Halaman yang akan menampilkan daftar produk yang ada pada aplikasi, ditampilkan dalam bentuk list. User bisa menekan produk yang diinginkan untuk melihat detail produk. Untuk menambah produk, user bisa menekan tombol tambah di pojok kanan atas (+). Ada juga side drawer yang menampilkan menu.
 
 Kode dari `lib/ui/produk_page.dart`:
@@ -139,7 +139,7 @@ Potongan kode di atas menggunakan `FutureBuilder` untuk memanggil data produk da
 
 
 ### 4. Halaman Produk Form
-![Produk Form](docs-api/tambah-produk.jpeg)
+![Produk Form](docs-api/tambah-produk.jpeg)<br>
 Halaman yang digunakan untuk menambah produk baru ke dalam aplikasi. User dipersilakan untuk mengisi semua kolom yang tersedia, lalu menekan tombol 'Simpan' untuk menyimpan produk dalam aplikasi.
 
 Kode dari `lib/ui/produk_form.dart`:
@@ -179,8 +179,8 @@ Pada kode di atas, fungsi `simpan()` digunakan untuk menambah data produk baru. 
 
 
 ### 5. Halaman Produk Detail
-a. Detail Produk
-![Produk Detail](docs-api/detail-produk.jpeg)
+a. Detail Produk<br>
+![Produk Detail](docs-api/detail-produk.jpeg)<br>
 Halaman yang menampilkan detail lebih lanjut tentang produk. User juga dapat melakukan berbagai aksi, seperti 'Edit' yang akan mengarahkan pengguna ke form ubah produk, dan 'Hapus' yang akan mengarahkan pengguna ke pop up untuk konfirmasi menghapus produk dalam aplikasi.
 
 Kode dari `lib/ui/produk_detail.dart`:
@@ -210,8 +210,8 @@ body: Center(
 
 Pada kode di atas, setiap atribut produk (`kodeProduk`, `namaProduk`, `hargaProduk`) diambil dari `widget.produk` dan di bagian akhir `_tombolHapusEdit()` dipanggil untuk menampilkan tombol aksi (edit/hapus).
 
-b. Edit Produk
-![Edit Produk](docs-api/ubah-produk.jpeg)
+b. Edit Produk<br>
+![Edit Produk](docs-api/ubah-produk.jpeg)<br>
 Halaman yang menampilkan form untuk mengedit/mengubah produk yang telah disimpan sebelumnya.
 
 Kode dari `lib/ui/produk_form.dart`:
@@ -249,8 +249,8 @@ ubah() {
 
 Pada kode di atas, fungsi `ubah()` digunakan untuk mengirim permintaan update data produk. Fungsi ini pertama-tama mengaktifkan indikator loading dengan `setState`. Kemudian membuat objek `Produk` baru dengan `id` produk yang sedang diedit, lalu mengisi nilai terbaru dari controller input. Data tersebut dikirim ke server melalui `ProdukBloc.updateProduk()`. Jika permintaan berhasil, halaman dialihkan kembali ke `ProdukPage`; jika gagal, ditampilkan `WarningDialog`. Di akhir fungsi, loading dinonaktifkan kembali dengan `setState`.
 
-c. Hapus Produk
-![Hapus Produk](docs-api/hapus-produk.jpeg)
+c. Hapus Produk<br>
+![Hapus Produk](docs-api/hapus-produk.jpeg)<br>
 Tombol ini akan mengarahkan user kepada dialog/popup untuk konfimasi apakah user yakin untuk menghapus produk. Jika user mengklik `Ya`, produk akan dihapus. Jika user mengklik `Batal`, user akan diarahkan kembali ke detail produk.
 
 Kode dari `lib/ui/produk_detail.dart`:
